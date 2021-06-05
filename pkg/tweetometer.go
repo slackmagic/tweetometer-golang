@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -19,7 +20,6 @@ func CreateTwitterClient() *twitter.Client {
 	// OAuth1 http.Client will automatically authorize Requests
 	httpClient := config.Client(oauth1.NoContext, token)
 
-	// Twitter Client
 	return twitter.NewClient(httpClient)
 }
 
@@ -29,10 +29,9 @@ func StartStream() {
 
 	twitterDemux.Tweet = Process
 
-	// FILTER
 	filterParams := &twitter.StreamFilterParams{
-		Track:         []string{"#zlan2021"},
-		Language:      []string{"fr"},
+		Track:         strings.Split(strings.ReplaceAll(os.Getenv("Track"), "\"", ""), "|"),
+		Language:      strings.Split(strings.ReplaceAll(os.Getenv("Lang"), "\"", ""), "|"),
 		StallWarnings: twitter.Bool(true),
 	}
 
