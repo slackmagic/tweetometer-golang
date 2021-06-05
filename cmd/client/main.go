@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -13,12 +12,9 @@ import (
 
 func init() {
 	err := godotenv.Load(".env")
-
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-
-	fmt.Println(os.Getenv("NAME"))
 }
 
 func main() {
