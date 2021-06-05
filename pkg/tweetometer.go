@@ -17,7 +17,6 @@ func CreateTwitterClient() *twitter.Client {
 	config := oauth1.NewConfig(os.Getenv("ConsumerKey"), os.Getenv("ConsumerSecret"))
 	token := oauth1.NewToken(os.Getenv("Token"), os.Getenv("TokenSecret"))
 
-	// OAuth1 http.Client will automatically authorize Requests
 	httpClient := config.Client(oauth1.NoContext, token)
 
 	return twitter.NewClient(httpClient)
