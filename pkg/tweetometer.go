@@ -57,11 +57,13 @@ func StartStream() {
 func StopStream() {
 	fmt.Println("Stopping Stream...")
 	searchStream.Stop()
+	CloseDB()
 }
 
 func Process(tweet *twitter.Tweet) {
 	//DisplayTweet(tweet)
 	encodedTweet := Compress(EncodeToBytes(tweet))
+	InsertData([]byte(tweet.CreatedAt), encodedTweet)
 	decodedTweet := DecodeToTweet(Decompress(encodedTweet))
 
 	DisplayTweet(&decodedTweet)
@@ -82,7 +84,7 @@ func EncodeToBytes(p interface{})[]byte {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("uncompressed size (bytes): ", len(buf.Bytes()))
+
 	return buf.Bytes()
 }
 
