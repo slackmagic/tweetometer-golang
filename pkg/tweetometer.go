@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -14,14 +16,15 @@ import (
 
 var searchStream *twitter.Stream
 var twitterDemux twitter.SwitchDemux
+var charSeparator string = "|"
 
-func init(){
+func init() {
 	fmt.Println("INIT TWEETOMETER")
 	OpenDB()
 }
 
-func CreateTwitterClient() *twitter.Client {
-	
+func createTwitterClient() *twitter.Client {
+
 	config := oauth1.NewConfig(os.Getenv("ConsumerKey"), os.Getenv("ConsumerSecret"))
 	token := oauth1.NewToken(os.Getenv("Token"), os.Getenv("TokenSecret"))
 
@@ -30,15 +33,15 @@ func CreateTwitterClient() *twitter.Client {
 	return twitter.NewClient(httpClient)
 }
 
-func StartStream() {
-	client := CreateTwitterClient()
+func StartExtractionProcess() {
+	client := createTwitterClient()
 	twitterDemux = twitter.NewSwitchDemux()
 
-	twitterDemux.Tweet = Process
+	twitterDemux.Tweet = process
 
 	filterParams := &twitter.StreamFilterParams{
-		Track:         strings.Split(strings.ReplaceAll(os.Getenv("Track"), "\"", ""), "|"),
-		Language:      strings.Split(strings.ReplaceAll(os.Getenv("Lang"), "\"", ""), "|"),
+		Track:         strings.Split(strings.ReplaceAll(os.Getenv("Track"), "\"", ""), charSeparator),
+		Language:      strings.Split(strings.ReplaceAll(os.Getenv("Lang"), "\"", ""), charSeparator),
 		StallWarnings: twitter.Bool(true),
 	}
 
@@ -50,34 +53,41 @@ func StartStream() {
 	searchStream = stream
 
 	fmt.Println("Starting Stream...")
-	go twitterDemux.HandleChan(searchStream.Messages)
+	twitterDemux.HandleChan(searchStream.Messages)
 
 }
 
-func StopStream() {
+func StopExtractionProcess() {
 	fmt.Println("Stopping Stream...")
 	searchStream.Stop()
 	CloseDB()
 }
 
-func Process(tweet *twitter.Tweet) {
-	//DisplayTweet(tweet)
-	encodedTweet := Compress(EncodeToBytes(tweet))
-	InsertData([]byte(tweet.CreatedAt), encodedTweet)
-	decodedTweet := DecodeToTweet(Decompress(encodedTweet))
+func process(tweet *twitter.Tweet) {
+	displayTweet(tweet)
+	encodedTweet := Compress(encodeToBytes(tweet))
+	InsertData(createKeyFromTweet(tweet), encodedTweet)
 
-	DisplayTweet(&decodedTweet)
 }
 
-func DisplayTweet(tweet *twitter.Tweet){
-	fmt.Println("================================================")
-	fmt.Println("[" + tweet.User.Name + "] @ " + tweet.CreatedAt)
+func createKeyFromTweet(tweet *twitter.Tweet) []byte {
+	createdAt, err := tweet.CreatedAtTime()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	key := createdAt.UTC().Format(time.RFC3339Nano)
+	key += "@" + strconv.FormatInt(tweet.User.ID, 10)
+	return []byte(key)
+}
+
+func displayTweet(tweet *twitter.Tweet) {
+	fmt.Println("Insert [" + tweet.User.Name + "] @ " + tweet.CreatedAt)
 	fmt.Println("-----------------------------")
-	fmt.Println(tweet.Text)
 }
 
-func EncodeToBytes(p interface{})[]byte {
-	
+func encodeToBytes(p interface{}) []byte {
+
 	buf := bytes.Buffer{}
 	enc := gob.NewEncoder(&buf)
 	err := enc.Encode(p)
@@ -88,7 +98,7 @@ func EncodeToBytes(p interface{})[]byte {
 	return buf.Bytes()
 }
 
-func DecodeToTweet(s []byte) twitter.Tweet {
+func decodeToTweet(s []byte) twitter.Tweet {
 
 	p := twitter.Tweet{}
 	dec := gob.NewDecoder(bytes.NewReader(s))
