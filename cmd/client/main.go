@@ -18,12 +18,12 @@ func init() {
 }
 
 func main() {
-	pkg.StartStream()
+	go pkg.StartExtractionProcess()
 
 	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	log.Println(<-ch)
 
-	pkg.StopStream()
+	pkg.StopExtractionProcess()
 }
