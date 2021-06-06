@@ -18,8 +18,7 @@ func init() {
 }
 
 func main() {
-	go pkg.StartExtractionProcess()
-
+	go pkg.StartExtractionProcess("zlan", os.Getenv("Track"), os.Getenv("Lang"))
 	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)

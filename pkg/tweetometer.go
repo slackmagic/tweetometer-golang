@@ -33,15 +33,15 @@ func createTwitterClient() *twitter.Client {
 	return twitter.NewClient(httpClient)
 }
 
-func StartExtractionProcess() {
+func StartExtractionProcess(category string, track string, lang string) {
 	client := createTwitterClient()
 	twitterDemux = twitter.NewSwitchDemux()
 
 	twitterDemux.Tweet = process
 
 	filterParams := &twitter.StreamFilterParams{
-		Track:         strings.Split(strings.ReplaceAll(os.Getenv("Track"), "\"", ""), charSeparator),
-		Language:      strings.Split(strings.ReplaceAll(os.Getenv("Lang"), "\"", ""), charSeparator),
+		Track:         strings.Split(strings.ReplaceAll(track, "\"", ""), charSeparator),
+		Language:      strings.Split(strings.ReplaceAll(lang, "\"", ""), charSeparator),
 		StallWarnings: twitter.Bool(true),
 	}
 
